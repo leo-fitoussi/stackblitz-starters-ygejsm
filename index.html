@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cartes & Dés</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .card {
+        transition: transform 0.5s;
+      }
+      .card.flipping {
+        transform: scale(0.95);
+      }
+      .fullscreen {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.75);
+        z-index: 50;
+      }
+
+      /* Animations pour les dés */
+      @keyframes diceRoll {
+        0% {
+          transform: rotate(0deg) scale(1);
+        }
+        25% {
+          transform: rotate(90deg) scale(1.2);
+        }
+        50% {
+          transform: rotate(180deg) scale(1);
+        }
+        75% {
+          transform: rotate(270deg) scale(1.2);
+        }
+        100% {
+          transform: rotate(360deg) scale(1);
+        }
+      }
+
+      .dice-rolling {
+        animation: diceRoll 0.5s ease-in-out infinite;
+      }
+
+      .dice-appear {
+        animation: diceAppear 0.3s ease-out forwards;
+        transform-origin: center;
+      }
+
+      @keyframes diceAppear {
+        0% {
+          transform: scale(0) rotate(180deg);
+          opacity: 0;
+        }
+        60% {
+          transform: scale(1.2) rotate(-20deg);
+        }
+        100% {
+          transform: scale(1) rotate(0deg);
+          opacity: 1;
+        }
+      }
+
+      .shake-container {
+        animation: shakeContainer 0.5s ease-in-out infinite;
+      }
+
+      @keyframes shakeContainer {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px) rotate(-5deg);
+        }
+        75% {
+          transform: translateX(5px) rotate(5deg);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen p-4">
+    <div class="container mx-auto max-w-4xl">
+      <h1 class="text-2xl font-bold text-center mb-8">Cartes & Dés</h1>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Section des dés -->
+        <div class="col-span-1 md:col-span-2 bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-lg font-semibold mb-4">Lancer les dés</h2>
+        <div class="flex flex-col items-center">
+          <div class="mb-4 flex items-center gap-4">
+            <span class="text-gray-600">Nombre de dés:</span>
+            <select
+              id="diceCount"
+              class="border border-gray-300 rounded-md p-2"
+              onchange="updateDiceCount()"
+            >
+              <option value="1">1 dé</option>
+              <option value="2" selected>2 dés</option>
+            </select>
+          </div>
+          <button
+            onclick="rollDice()"
+            id="rollButton"
+            class="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 mb-4"
+          >
+            Lancer les dés
+          </button>
+          <div id="diceContainer" class="flex gap-4"></div>
+        </div>
+      </div>
+
+        <!-- Deck Full Kiff -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-purple-600">Full Kiff</h2>
+            <span class="text-sm text-gray-600">
+              Cartes restantes: <span id="deckACount">20</span>/20
+            </span>
+          </div>
+          <div class="flex flex-col items-center">
+            <button
+              onclick="drawCard('A')"
+              id="drawButtonA"
+              class="bg-purple-500 text-white px-6 py-3 rounded-md hover:bg-purple-600 mb-4"
+            >
+              Tirer une carte
+            </button>
+            <div
+              id="cardA"
+              class="card w-64 h-96 rounded-xl cursor-pointer"
+              onclick="showFullscreen('A')"
+            >
+              <div
+                class="h-full rounded-xl p-6 flex flex-col bg-purple-100 border-4 border-purple-400"
+              >
+                <div class="text-center mb-4">
+                  <h3 class="text-sm uppercase tracking-wider text-purple-600">
+                    Full Kiff
+                  </h3>
+                </div>
+                <div
+                  class="flex-1 flex flex-col items-center justify-center text-center"
+                >
+                  <h2 id="titleA" class="text-2xl font-bold mb-4">?</h2>
+                  <p id="descA" class="text-gray-600">Tirez une carte</p>
+                </div>
+                <div class="text-right">
+                  <span id="idA" class="text-sm text-purple-400">#?</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deck Game -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-amber-600">Game</h2>
+            <span class="text-sm text-gray-600">
+              Cartes restantes: <span id="deckBCount">14</span>/14
+            </span>
+          </div>
+          <div class="flex flex-col items-center">
+            <button
+              onclick="drawCard('B')"
+              id="drawButtonB"
+              class="bg-amber-500 text-white px-6 py-3 rounded-md hover:bg-amber-600 mb-4"
+            >
+              Tirer une carte
+            </button>
+            <div
+              id="cardB"
+              class="card w-64 h-96 rounded-xl cursor-pointer"
+              onclick="showFullscreen('B')"
+            >
+              <div
+                class="h-full rounded-xl p-6 flex flex-col bg-amber-100 border-4 border-amber-400"
+              >
+                <div class="text-center mb-4">
+                  <h3 class="text-sm uppercase tracking-wider text-amber-600">
+                    Game
+                  </h3>
+                </div>
+                <div
+                  class="flex-1 flex flex-col items-center justify-center text-center"
+                >
+                  <h2 id="titleB" class="text-2xl font-bold mb-4">?</h2>
+                  <p id="descB" class="text-gray-600">Tirez une carte</p>
+                </div>
+                <div class="text-right">
+                  <span id="idB" class="text-sm text-amber-400">#?</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+      </div>
+
+        <button
+        onclick="resetGame()"
+        class="block mx-auto bg-red-500 text-white px-6 py-3 rounded-md hover:bg-red-600 mb-16 mt-8"
+        >
+        Réinitialiser le jeu
+        </button>
+
+      <!-- Modal carte plein écran -->
+      <div id="fullscreenCard" class="fullscreen" onclick="hideFullscreen()">
+        <div
+          class="relative w-11/12 h-5/6 max-w-2xl mx-auto mt-12"
+          onclick="event.stopPropagation()"
+        >
+          <div
+            id="fullscreenContent"
+            class="w-full h-full rounded-2xl bg-white p-8 shadow-xl"
+          >
+            <div class="text-center mb-8">
+              <h3
+                id="fullscreenDeck"
+                class="text-xl uppercase tracking-wider"
+              ></h3>
+            </div>
+            <div
+              class="flex-1 flex flex-col items-center justify-center text-center"
+            >
+              <h2 id="fullscreenTitle" class="text-4xl font-bold mb-8"></h2>
+              <p id="fullscreenDesc" class="text-2xl text-gray-600"></p>
+            </div>
+            <div class="absolute bottom-8 right-8">
+              <span id="fullscreenId" class="text-xl"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Données des cartes
+      // Données des cartes
+      const deckA = [
+        {
+          id: 1,
+          title: 'Shot nombril écolo',
+          description:
+            'Offre un shot à ton voisin de gauche, à prendre directement dans ton nombril',
+        },
+        {
+          id: 2,
+          title: 'Lis ton dernier message',
+          description: "Espérons qu'il soit drôle",
+        },
+        {
+          id: 3,
+          title: 'Snap Roulette',
+          description:
+            "C'est parti, on lance une partie de Snap roulette pour un max de fun 🤘",
+        },
+        {
+          id: 4,
+          title: '3 anecdotes, 1 vérité',
+          description:
+            'Si tu connais pas ce jeu, on ne peut plus rien faire pour toi…',
+        },
+        {
+          id: 5,
+          title: 'Olive à gauche',
+          description:
+            'Croise tes doigts pour former un "pistolet" avec tes deux mains, vise entre les fesses et… "l\'olive" est plantée !',
+        },
+        {
+          id: 6,
+          title: 'Surnom',
+          description:
+            "Tes potes te donnent un surnom que tu dois garder jusqu'à la fin du jeu. Ceux qui t'appellent autrement prennent une punition.",
+        },
+        {
+          id: 7,
+          title: 'Binome',
+          description:
+            "Le prochain à tirer une carte Full Kiff sera ton binôme. Chaque gorgée que l'un prend, l'autre la prend aussi",
+        },
+        {
+          id: 8,
+          title: 'Olive à droite',
+          description:
+            'Croise tes doigts pour former un "pistolet" avec tes deux mains, vise entre les fesses et… "l\'olive" est plantée !',
+        },
+        {
+          id: 9,
+          title: 'Dernier mensonge',
+          description:
+            "Quel est le dernier mensonge que tu as dit à quelqu'un du groupe ?",
+        },
+        {
+          id: 10,
+          title: 'Pire cadeau',
+          description: "Quel est le pire cadeau que tes potes t'ont offert ?",
+        },
+        {
+          id: 11,
+          title: 'Les absents ont toujours tort',
+          description: "Mime le frein qui n'est pas venu ce soir",
+        },
+        {
+          id: 12,
+          title: 'Déclaration à droite',
+          description: "Fais une déclaration d'amour à ton voisin de droite",
+        },
+        {
+          id: 13,
+          title: 'Déclaration à gauche',
+          description: "Fais une déclaration d'amour à ton voisin de gauche",
+        },
+        {
+          id: 14,
+          title: 'Politicien',
+          description: 'Tu es pro-Trump, défends-le "prem deg"',
+        },
+        {
+          id: 15,
+          title: "L'archouma",
+          description: 'Raconte une anecdote honteuse sur toi',
+        },
+        {
+          id: 16,
+          title: 'A chacun sa chance',
+          description:
+            'Prends 3 gorgées dans le verre de la prochaine personne qui tire une carte Full Kiff',
+        },
+        {
+          id: 17,
+          title: 'Fuck Marry Kill',
+          description:
+            'Parmi tes ex, qui tu baise, qui tu épouses, qui tu tues ?',
+        },
+        {
+          id: 18,
+          title: 'Shot nombril raciste',
+          description:
+            'Offre un shot à ton voisin de droite, à prendre directement dans ton nombril',
+        },
+        {
+          id: 19,
+          title: 'Poutine',
+          description:
+            'Je ne parle pas des frites mais du dictateur. Comme lui, impose ta nouvelle règle.',
+        },
+        {
+          id: 20,
+          title: 'Mythomane',
+          description:
+            'Quel est le plus gros mytho que tu aies raconté dans ta vie entière depuis ta naissance ?',
+        },
+      ];
+
+      const deckB = [
+        {
+          id: 1,
+          title: 'Sardine',
+          description:
+            'La sardine part se cacher, les autres essaient de la trouver. Le dernier a perdu',
+        },
+        {
+          id: 2,
+          title: 'Cache-Cache',
+          description: "Seigneur… faut-il vraiment vous l'expliquer ?",
+        },
+        {
+          id: 3,
+          title: 'Shi Fu Tise',
+          description: 'Organisez un championnat de Shi Fu Tise',
+        },
+        {
+          id: 4,
+          title: 'Edite Piaf',
+          description:
+            'Chante une chanson en écoutant une autre dans les oreilles',
+        },
+        {
+          id: 5,
+          title: 'Fuck Marry Kill',
+          description:
+            'Parmi les personnes présentes, qui tu baise, qui tu épouses, qui tu tues ?',
+        },
+        {
+          id: 6,
+          title: "J'ai déjà / Je n'ai jamais",
+          description:
+            "Raconte quelque chose que tu as fait, mais que personne d'autre n'a fait, ou inversement. Les personnes qui n'ont pas le même vécu, boivent :)",
+        },
+        {
+          id: 7,
+          title: 'Dans ma valise',
+          description:
+            "NDL : \"Ceci est un exemple \"\nJoueur 1 : Dans ma valise j'ai … un gode.\nJoueur 2 : Dans ma valise j'ai un gode et … une poupée.\nJoueur 3 : Dans ma valise j'ai un gode, une poupée, et ….",
+        },
+        {
+          id: 8,
+          title: 'Plus grand / Plus petit',
+          description:
+            'Ton voisin parie sur le résultat de ton lancer de dé. Tu lances, et il boit en fonction du résultat. Puis ça continue pour tout le monde',
+        },
+        {
+          id: 9,
+          title: 'Good Luck',
+          description:
+            'Chacun lance un dé, et en fonction du résultat :\n1. Tu bois\n2. Tes voisins boivent\n3. Invente une règle pour le prochain 3\n4. Four to the foor\n5. Five to the sky\n6. Distribue 6',
+        },
+        {
+          id: 10,
+          title: 'La différence',
+          description:
+            'Lance deux fois de suite, faites la différence entre les deux chiffres et buvez !',
+        },
+        {
+          id: 11,
+          title: 'Jeu du doigt',
+          description:
+            "Le jeu où tout le monde tend son doigt, un joueur compte jusqu'à 3, et pari sur le nombre de doigts qui resteront, en même temps que les autres joueurs choisissent d'enlever ou non leur doigt. Bon, si personne ne connaît > Google",
+        },
+        {
+          id: 12,
+          title: '100% Kiff',
+          description:
+            'Direction la maternel, la braguette bien fermée pour les messieurs. On compte jusqu\'à 100 en remplaçant les 7 par "Kiff". Ex : 1, 2, 3,…,16, "10 Kiff", 18,… Tu perds = tu bois. Facile, non ?',
+        },
+        {
+          id: 13,
+          title: 'Bolinette',
+          description:
+            "C'est dl'a poule vous verrez ! \nChacun met un peu de son breuvage dans un récipient commun. Faites un concours de Shi Fu Mi. Le gagnant distribue la création collective à boire cul sec… ou kiffe.\nNB : Remplacez le Shi Fu Mi par ce que vous voulez !",
+        },
+        {
+          id: 14,
+          title: 'Jeu des problèmes',
+          description:
+            "Tes potes se mettent d'accord pour te poser une question à laquelle tu n'as pas envie de répondre",
+        },
+      ];
+      // État du jeu
+      let state = {
+        remainingDeckA: [...deckA],
+        remainingDeckB: [...deckB],
+        currentCardA: null,
+        currentCardB: null,
+        isFlippingA: false,
+        isFlippingB: false,
+        isRolling: false,
+      };
+
+      // Fonctions utilitaires
+      function updateCounters() {
+        document.getElementById('deckACount').textContent =
+          state.remainingDeckA.length;
+        document.getElementById('deckBCount').textContent =
+          state.remainingDeckB.length;
+      }
+
+      function updateCardDisplay(deck, card) {
+        const prefix = deck;
+        document.getElementById(`title${prefix}`).textContent = card
+          ? card.title
+          : '?';
+        document.getElementById(`desc${prefix}`).textContent = card
+          ? card.description
+          : 'Tirez une carte';
+        document.getElementById(`id${prefix}`).textContent = card
+          ? `#${card.id}`
+          : '#?';
+      }
+
+      // Fonctions principales
+      function resetGame() {
+        state = {
+          remainingDeckA: [...deckA],
+          remainingDeckB: [...deckB],
+          currentCardA: null,
+          currentCardB: null,
+          isFlippingA: false,
+          isFlippingB: false,
+          isRolling: false,
+        };
+        updateCounters();
+        updateCardDisplay('A', null);
+        updateCardDisplay('B', null);
+        document.getElementById('diceContainer').innerHTML = '';
+      }
+
+      function drawCard(deck) {
+        const isA = deck === 'A';
+        const remaining = isA ? state.remainingDeckA : state.remainingDeckB;
+        const button = document.getElementById(`drawButton${deck}`);
+        const card = document.getElementById(`card${deck}`);
+
+        if (remaining.length === 0) {
+          alert(
+            `Plus de cartes disponibles dans le deck ${
+              isA ? 'Full Kiff' : 'Game'
+            } !`
+          );
+          return;
+        }
+
+        if ((isA && state.isFlippingA) || (!isA && state.isFlippingB)) {
+          return;
+        }
+
+        const randomIndex = Math.floor(Math.random() * remaining.length);
+        const drawnCard = remaining[randomIndex];
+        const newDeck = remaining.filter((_, index) => index !== randomIndex);
+
+        button.disabled = true;
+        card.classList.add('flipping');
+
+        if (isA) {
+          state.remainingDeckA = newDeck;
+          state.isFlippingA = true;
+        } else {
+          state.remainingDeckB = newDeck;
+          state.isFlippingB = true;
+        }
+
+        setTimeout(() => {
+          if (isA) {
+            state.currentCardA = drawnCard;
+            state.isFlippingA = false;
+          } else {
+            state.currentCardB = drawnCard;
+            state.isFlippingB = false;
+          }
+          updateCardDisplay(deck, drawnCard);
+          updateCounters();
+          card.classList.remove('flipping');
+          button.disabled = false;
+        }, 500);
+      }
+
+      function showFullscreen(deck) {
+        const card = deck === 'A' ? state.currentCardA : state.currentCardB;
+        if (!card) return;
+
+        const modal = document.getElementById('fullscreenCard');
+        const content = document.getElementById('fullscreenContent');
+        const deckName = deck === 'A' ? 'Full Kiff' : 'Game';
+
+        document.getElementById('fullscreenDeck').textContent = deckName;
+        document.getElementById(
+          'fullscreenDeck'
+        ).className = `text-xl uppercase tracking-wider ${
+          deck === 'A' ? 'text-purple-600' : 'text-amber-600'
+        }`;
+
+        document.getElementById('fullscreenTitle').textContent = card.title;
+        document.getElementById('fullscreenDesc').textContent =
+          card.description;
+        document.getElementById('fullscreenId').textContent = `#${card.id}`;
+        document.getElementById('fullscreenId').className = `text-xl ${
+          deck === 'A' ? 'text-purple-400' : 'text-amber-400'
+        }`;
+
+        content.className = `w-full h-full rounded-2xl bg-white p-8 shadow-xl border-8 
+            ${deck === 'A' ? 'border-purple-400' : 'border-amber-400'}`;
+
+        modal.style.display = 'block';
+      }
+
+      function hideFullscreen() {
+        document.getElementById('fullscreenCard').style.display = 'none';
+      }
+
+      function createDie(value, index) {
+        return `<div class="w-16 h-16 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center text-3xl font-bold dice-appear" 
+                     style="animation-delay: ${index * 0.1}s">
+                ${value}
+            </div>`;
+      }
+
+      function rollDice() {
+        if (state.isRolling) return;
+
+        const container = document.getElementById('diceContainer');
+        const button = document.getElementById('rollButton');
+        const diceCount = parseInt(document.getElementById('diceCount').value);
+
+        state.isRolling = true;
+        button.disabled = true;
+
+        // Créer des dés temporaires pour l'animation
+        container.innerHTML = Array(diceCount)
+          .fill(0)
+          .map(
+            () => `<div class="w-16 h-16 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center text-3xl font-bold dice-rolling">
+                ?
+            </div>`
+          )
+          .join('');
+        container.classList.add('shake-container');
+
+        // Attendre la fin de l'animation
+        setTimeout(() => {
+          const results = Array(diceCount)
+            .fill(0)
+            .map(() => Math.floor(Math.random() * 6) + 1);
+          container.classList.remove('shake-container');
+          container.innerHTML = results.map(createDie).join('');
+          state.isRolling = false;
+          button.disabled = false;
+        }, 1000);
+      }
+
+      function updateDiceCount() {
+        document.getElementById('diceContainer').innerHTML = '';
+      }
+    </script>
+  </body>
+</html>
